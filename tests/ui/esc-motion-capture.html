@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><title>Central ESC installation Chrome QA</title>
+<style>html,body,#viewport{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1018}
+#label{position:absolute;left:20px;top:20px;color:#e8f2ff;font:16px system-ui;background:#0b1018aa;padding:8px 12px;border-radius:6px}</style>
+</head><body><div id="viewport"></div><div id="label">Loading…</div>
+<script type="module">
+import * as THREE from 'three';
+import { initializeScene } from '/src/three/scene.ts';
+try{
+ const viewer=initializeScene(document.querySelector('#viewport'),4,'frame-aster-450');
+ const frame=await viewer.modelReady;
+ viewer.seekSelectionAnimation(viewer.frameSelectionDuration);
+ await viewer.setSelectedEsc('esc-v25');
+ viewer.seekSelectionAnimation(viewer.escSelectionDuration*.5);
+ viewer.renderer.setAnimationLoop(()=>{viewer.controls.update();viewer.renderer.render(viewer.scene,viewer.camera);});
+ const pose=()=>{
+   const mount=frame.getObjectByName('SmallQuad_ESCMount').getWorldPosition(new THREE.Vector3());
+   const plate=new THREE.Box3().setFromObject(frame.getObjectByName('SmallQuad_TopPlate')).getCenter(new THREE.Vector3());
+   return `Aster 450 — ESC midway; camera ${viewer.camera.position.distanceTo(viewer.controls.target).toFixed(3)} m; mount/plate ${mount.distanceTo(plate).toFixed(3)} m; ESC ${viewer.scene.getObjectByName('SmallQuad_ESC_4in1').position.x.toFixed(3)} m`;
+ };
+ document.querySelector('#label').textContent=pose();
+ setTimeout(()=>{document.querySelector('#label').textContent=pose();},1000);
+ document.body.dataset.ready='true';
+}catch(e){document.querySelector('#label').textContent=`ERROR: ${e.message}`;document.body.dataset.ready='error';}
+</script></body></html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Aster 450 central ESC Chrome QA</title>
+<style>html,body,#viewport{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1018}
+#label{position:absolute;left:20px;top:20px;color:#e8f2ff;font:16px system-ui;background:#0b1018aa;padding:8px 12px;border-radius:6px}</style>
+</head>
+<body><div id="viewport"></div><div id="label">Loading Aster 450…</div>
+<script type="module">
+import * as THREE from 'three';
+import { initializeScene } from '/src/three/scene.ts';
+try {
+ const viewer=initializeScene(document.querySelector('#viewport'),4,'frame-aster-450');
+ const frame=await viewer.modelReady;
+ viewer.seekSelectionAnimation(viewer.frameSelectionDuration);
+ await viewer.setSelectedEsc('esc-v25');viewer.seekSelectionAnimation(viewer.escSelectionDuration);
+ await viewer.setSelectedMotor('motor-m2216');viewer.seekSelectionAnimation(viewer.motorSelectionDuration);
+ await viewer.setSelectedPropeller('propeller-p9045');viewer.seekSelectionAnimation(viewer.propellerSelectionDuration);
+ if(!frame.getObjectByName('SmallQuad_ESC_4in1') || [1,2,3,4].some(i=>frame.getObjectByName(`SmallQuad_ESC_0${i}`)))
+   throw new Error('Central ESC count mismatch');
+ frame.updateMatrixWorld(true);
+ const target=frame.getObjectByName('SmallQuad_ESCMount').getWorldPosition(new THREE.Vector3());
+ const top=new URLSearchParams(location.search).get('view')==='top';
+ viewer.controls.target.copy(target);
+ viewer.controls.minDistance=.1;
+ if(top){viewer.camera.up.set(0,0,-1);viewer.camera.position.copy(target).add(new THREE.Vector3(0,.48,0));}
+ else{viewer.camera.up.set(0,1,0);viewer.camera.position.copy(target).add(new THREE.Vector3(.26,.20,.28));}
+ viewer.camera.lookAt(target);viewer.controls.update();
+ document.querySelector('#label').textContent=top?'Aster 450 — central 4-in-1 ESC (top)':'Aster 450 — central 4-in-1 ESC';
+ document.body.dataset.ready='true';
+}catch(e){document.querySelector('#label').textContent=`ERROR: ${e.message}`;document.body.dataset.ready='error';}
+</script></body></html>
